@@ -94,9 +94,11 @@ def EGLO(E, E0, Gamma0, sigma0, T):
     # [91] J. Kopecky and R.E. Chrien. Observation of the M 1 giant resonance by resonance
     # averaging in 106 P d. Nuclear Physics A, 468(2):285-300, 1987. ISSN 0375-9474. doi:
     # 10.1016/0375-9474(87)90518-5.
+    # and RIPL3 documentation
     # -- but constant temperature dependece!
-    epsilon_0 = 4.5    # (MeV)
+    epsilon_0 = 4.5    # (MeV); adopted from RIPL: However, potentially depends on model for state density
     
+    # also k is adopted from RIPL: However,"depends on model for state density! (they assume Fermi gas!)
     if A<148:
        k = 1.0
     if(A>=148): 
@@ -104,8 +106,8 @@ def EGLO(E, E0, Gamma0, sigma0, T):
 
     Kappa =    k + (1.0-k)   * (E-epsilon_0)/(E0-epsilon_0)
     Kappa_0 =  k + (k-1.)    * (epsilon_0)  /(E0-epsilon_0)
-    Gamma_k =  Kappa *   Gamma0 * (E + (2.0 * pi * T)**2) / E0**2
-    Gamma_k0 = Kappa_0 * Gamma0 * (2. * pi * T)*2 / E0**2
+    Gamma_k =  Kappa *   Gamma0 * (E**2 + (2.0 * pi * T)**2) / E0**2
+    Gamma_k0 = Kappa_0 * Gamma0 * (2. * pi * T)**2 / E0**2
     denominator = ( E**2 - E0**2 )**2  + E**2 * E0**2
     
     f = factor * sigma0 * Gamma0 * ( (E*Gamma_k) / denominator + 0.7*Gamma_k0 / E0**3 )
