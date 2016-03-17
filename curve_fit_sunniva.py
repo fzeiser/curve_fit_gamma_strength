@@ -23,6 +23,8 @@ print data_ocl_sliced
 # Combine OCL and Berman data for this analysis (skip last two points from OCL - outliers)
 data_berm_ocl = np.vstack((data_ocl_sliced, data_berman))
 
+# Define some parameters
+factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 
 # == Define fitting functions ==
 # Define the different types of functions
@@ -36,16 +38,23 @@ data_berm_ocl = np.vstack((data_ocl_sliced, data_berman))
 # However, if this is done, we must take care not to accept the
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
+
+Tmin = 0.01  # minimum accepted temperature (see "hack")
+Tmax = 0.6   # maximum accepted temperature (see "hack")
+
 def SLO(E, E0, Gamma0, sigma0):
 	# Special Lorentzian,
 	# adapted from Kopecky & Uhl (1989) eq. (2.1)
-	f = 8.68e-8 * sigma0 * E * Gamma0**2 / ( (E**2 - E0**2)**2 + E**2 * Gamma0**2 )
+	f = factor * sigma0 * E * Gamma0**2 / ( (E**2 - E0**2)**2 + E**2 * Gamma0**2 )
+	
+	# "the hack"
 	if sigma0 < 0:
 		return f + sigma0**2*1e10
 	elif E0 < 0:
 		return f + E0**2*1e10
 	elif Gamma0 < 0:
 		return f + Gamma0**2*1e10
+
 	else:
 		return f
 
@@ -53,7 +62,9 @@ def GLO(E, E0, Gamma0, sigma0, T):
 	# Generalized Lorentzian,
 	# adapted from Kopecky & Uhl (1989) eq. (2.2-2.3)
 	Gamma = Gamma0 * (E**2 + 4* pi**2 * T**2) / E0**2
-	f = 8.68e-8 * sigma0 * E * Gamma0 * Gamma / ( (E**2 - E0**2)**2 + E**2 * Gamma**2 )
+	f = factor * sigma0 * E * Gamma0 * Gamma / ( (E**2 - E0**2)**2 + E**2 * Gamma**2 )
+	
+    # "the hack"
 	if sigma0 < 0:
 		return f + sigma0**2*1e10
 	elif E0 < 0:
@@ -62,24 +73,69 @@ def GLO(E, E0, Gamma0, sigma0, T):
 		return f + Gamma0**2*1e10
 	elif T < 0:
 		return f + T**2*1e10
-	elif T > 0.6:
-		return f + (T-0.6)**2*1e10
-	elif T < 0.01:
-		return f + (T-0.01)**2*1e10
+	elif T > Tmax:
+		return f + (T-Tmax)**2*1e10
+	elif T < Tmin:
+		return f + (T-Tmin)**2*1e10
+
 	else:
 		return f
 
+def EGLO(E, E0, Gamma0, sigma0, T):
+	# Enhanced Generalized Lorentzian,
+	# adapted from
+    # [92] S.G. Kadmenskii, V.P. Markushev, and V.I. Furman. Radiative width of neutron reson-
+    # ances. Giant dipole resonances. Sov. J. Nucl. Phys., 37:165, 1983.
+    # [91] J. Kopecky and R.E. Chrien. Observation of the M 1 giant resonance by resonance
+    # averaging in 106 P d. Nuclear Physics A, 468(2):285–300, 1987. ISSN 0375-9474. doi:
+    # 10.1016/0375-9474(87)90518-5.
+    # -- but constant temperature dependece!
+	epsilon_0 = 4.5	# (MeV)
+	
+	if A<148:
+	   k = 1.0
+	if(A>=148) 
+	   k = 1. + 0.09*(A-148)*(A-148)*exp(-0.18*(A-148))
+
+	Kappa =    k + (1.0-k)   * (E-epsilon_0)/(E0-epsilon_0)
+	Kappa_0 =  k + (k-1.)    * (epsilon_0)  /(E0-epsilon_0)
+	Gamma_k =  Kappa *   Gamma0 * (E_g + (2.0 * Pi * T)**2) / E0**2
+	Gamma_k0 = Kappa_0 * Gamma0 * (2. * Pi * T)*2 / E0**2
+	denominator = ( E**2 - E0**2 )**2  + E**2 * E0**2
+
+
+	# "the hack"
+	if sigma0 < 0:
+		return f + sigma0**2*1e10
+	elif E0 < 0:
+		return f + E0**2*1e10
+	elif Gamma0 < 0:
+		return f + Gamma0**2*1e10
+	elif T < 0:
+		return f + T**2*1e10
+	elif T > Tmax:
+		return f + (T-Tmax)**2*1e10
+	elif T < Tmin:
+		return f + (T-Tmin)**2*1e10
+
+	else:
+		return f
+	
+	f = factor * sigma0 * Gamma0 * ( (E*Gamma_k) / denominator + 0.7*Gamma_k0 / E0**3 );
+	    return f
+
+
 # Define the combined function that we want to fit to data, with all required parameters.
 def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
-	return GLO(E, E01, Gamma01, sigma01, T) + GLO(E, E02, Gamma02, sigma02, T) + SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
+	return EGLO(E, E01, Gamma01, sigma01, T) + EGLO(E, E02, Gamma02, sigma02, T) + SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
 
 
 # == Do the curve fit ==
 # Starting parameters (by-eye fit) 
 p0=[
-	11.5, 3.5, 371, 	# GLO number 1
-	14, 4.46, 300,  	# GLO number 2
-	0.2, 				# Common GLO temperature
+	11.5, 3.5, 371, 	# EGLO number 1
+	14, 4.46, 300,  	# EGLO number 2
+	0.2, 				# Common EGLO temperature
 	2.55, 1.2, 1.55,	# SLO number 1 (scissors?)
 	5.0, 2.5, 7, 		# SLO number 2
 	7.5, 2, 10			# SLO number 3
