@@ -1,5 +1,6 @@
 from __future__ import division
 from math import pi
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
@@ -8,6 +9,10 @@ import sys
 # Python script to fit (nuclear) curves to data. Requires Scipy.
 # Made by Joergen E. Midtboe, University of Oslo
 # This version 9/11/2015
+
+## Parameters for the nucleus
+A = 240          # (residual nucleus)
+
 
 
 # == Import data ==
@@ -82,47 +87,45 @@ def GLO(E, E0, Gamma0, sigma0, T):
 		return f
 
 def EGLO(E, E0, Gamma0, sigma0, T):
-	# Enhanced Generalized Lorentzian,
-	# adapted from
+    # Enhanced Generalized Lorentzian,
+    # adapted from
     # [92] S.G. Kadmenskii, V.P. Markushev, and V.I. Furman. Radiative width of neutron reson-
     # ances. Giant dipole resonances. Sov. J. Nucl. Phys., 37:165, 1983.
     # [91] J. Kopecky and R.E. Chrien. Observation of the M 1 giant resonance by resonance
-    # averaging in 106 P d. Nuclear Physics A, 468(2):285–300, 1987. ISSN 0375-9474. doi:
+    # averaging in 106 P d. Nuclear Physics A, 468(2):285-300, 1987. ISSN 0375-9474. doi:
     # 10.1016/0375-9474(87)90518-5.
     # -- but constant temperature dependece!
-	epsilon_0 = 4.5	# (MeV)
-	
-	if A<148:
-	   k = 1.0
-	if(A>=148) 
-	   k = 1. + 0.09*(A-148)*(A-148)*exp(-0.18*(A-148))
+    epsilon_0 = 4.5    # (MeV)
+    
+    if A<148:
+       k = 1.0
+    if(A>=148): 
+       k = 1. + 0.09*(A-148)*(A-148)*math.exp(-0.18*(A-148))
 
-	Kappa =    k + (1.0-k)   * (E-epsilon_0)/(E0-epsilon_0)
-	Kappa_0 =  k + (k-1.)    * (epsilon_0)  /(E0-epsilon_0)
-	Gamma_k =  Kappa *   Gamma0 * (E_g + (2.0 * Pi * T)**2) / E0**2
-	Gamma_k0 = Kappa_0 * Gamma0 * (2. * Pi * T)*2 / E0**2
-	denominator = ( E**2 - E0**2 )**2  + E**2 * E0**2
+    Kappa =    k + (1.0-k)   * (E-epsilon_0)/(E0-epsilon_0)
+    Kappa_0 =  k + (k-1.)    * (epsilon_0)  /(E0-epsilon_0)
+    Gamma_k =  Kappa *   Gamma0 * (E + (2.0 * pi * T)**2) / E0**2
+    Gamma_k0 = Kappa_0 * Gamma0 * (2. * pi * T)*2 / E0**2
+    denominator = ( E**2 - E0**2 )**2  + E**2 * E0**2
+    
+    f = factor * sigma0 * Gamma0 * ( (E*Gamma_k) / denominator + 0.7*Gamma_k0 / E0**3 )
 
+    # "the hack"
+    if sigma0 < 0:
+        return f + sigma0**2*1e10
+    elif E0 < 0:
+        return f + E0**2*1e10
+    elif Gamma0 < 0:
+        return f + Gamma0**2*1e10
+    elif T < 0:
+        return f + T**2*1e10
+    elif T > Tmax:
+        return f + (T-Tmax)**2*1e10
+    elif T < Tmin:
+        return f + (T-Tmin)**2*1e10
 
-	# "the hack"
-	if sigma0 < 0:
-		return f + sigma0**2*1e10
-	elif E0 < 0:
-		return f + E0**2*1e10
-	elif Gamma0 < 0:
-		return f + Gamma0**2*1e10
-	elif T < 0:
-		return f + T**2*1e10
-	elif T > Tmax:
-		return f + (T-Tmax)**2*1e10
-	elif T < Tmin:
-		return f + (T-Tmin)**2*1e10
-
-	else:
-		return f
-	
-	f = factor * sigma0 * Gamma0 * ( (E*Gamma_k) / denominator + 0.7*Gamma_k0 / E0**3 );
-	    return f
+    else:
+        return f
 
 
 # Define the combined function that we want to fit to data, with all required parameters.
@@ -133,12 +136,14 @@ def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03,
 # == Do the curve fit ==
 # Starting parameters (by-eye fit) 
 p0=[
-	11.5, 3.5, 371, 	# EGLO number 1
-	14, 4.46, 300,  	# EGLO number 2
-	0.2, 				# Common EGLO temperature
-	2.55, 1.2, 1.55,	# SLO number 1 (scissors?)
-	5.0, 2.5, 7, 		# SLO number 2
-	7.5, 2, 10			# SLO number 3
+ # omega, Gamma, sigma
+ # MeV,   MeV,   mb
+	11.3, 3.2, 290, 	# EGLO number 1
+	14.15, 5.5, 340,  	# EGLO number 2
+	0.34, 				# Common EGLO temperature in MeV
+	1.9, 0.6, 0.68,	    # SLO number 1 (scissors?)
+	2.7, 0.75, 0.35, 	# SLO number 2
+	7.5, 5.45, 20		# SLO number 3
 	]
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
 popt, pcov = curve_fit(f, data_berm_ocl[:,0], data_berm_ocl[:,1], p0=p0,
