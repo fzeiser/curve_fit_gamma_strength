@@ -135,7 +135,7 @@ def EGLO(E, E0, Gamma0, sigma0, T):
 
 # Define the combined function that we want to fit to data, with all required parameters.
 def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
-	return EGLO(E, E01, Gamma01, sigma01, T) + EGLO(E, E02, Gamma02, sigma02, T) + SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
+	return GLO(E, E01, Gamma01, sigma01, T) + GLO(E, E02, Gamma02, sigma02, T) + SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
 
 
 # == Do the curve fit ==
