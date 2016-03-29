@@ -65,9 +65,12 @@ def SLO(E, E0, Gamma0, sigma0):
 
 def GLO(E, E0, Gamma0, sigma0, T):
 	# Generalized Lorentzian,
-	# adapted from Kopecky & Uhl (1989) eq. (2.2-2.3)
+	# adapted from Kopecky & Uhl (1989) eq. (2.3-2.4)
 	Gamma = Gamma0 * (E**2 + 4* pi**2 * T**2) / E0**2
-	f = factor * sigma0 * E * Gamma0 * Gamma / ( (E**2 - E0**2)**2 + E**2 * Gamma**2 )
+	f1    = (E * Gamma)/( (E**2 - E0**2)**2 + E**2 * Gamma**2 )
+	f2    = 0.7 * Gamma0 *  4* pi**2 * T**2 / E0**5
+
+	f = factor * sigma0 * Gamma0 * ( f1 + f2 )
 	
     # "the hack"
 	if sigma0 < 0:
