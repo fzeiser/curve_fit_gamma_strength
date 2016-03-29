@@ -182,18 +182,23 @@ plt.hold('on')
 # Initial by-eye fit
 E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p0
 farray_0 = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
-plt.plot(Earray, farray_0, color="magenta")
+line1, = plt.plot(Earray, farray_0, color="magenta", label="line 1")
 # Actual best-fit curve
 E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
 farray_opt = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
-plt.plot(Earray, farray_opt, color="cyan")
+line2, = plt.plot(Earray, farray_opt, color="cyan", label="line 2")
 
 # Plot fitted partial spectra
-plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
 plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
 plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
 plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
 plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
+
+# ==LEGEND==
+# Create a legend for the first line.
+plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
 
 # Show the whole thing
 plt.show()
