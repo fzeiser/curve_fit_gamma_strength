@@ -17,16 +17,17 @@ A = 240          # (residual nucleus)
 
 # == Import data ==
 # Import data as matrices using built-in functionality.
-data_ocl = np.loadtxt('Output_data_OCL_strength_U234.txt', skiprows=1)
-data_berman = np.loadtxt('rsf_gx_233U_Berman_1986_unw.txt', skiprows=1)
+data_ocl = np.loadtxt('AA_gSF_240Pu_strength.dat', skiprows=1)
+data_experimental1 = np.loadtxt('AA_gSF_239Pu_gurevich_1976_g_abs.txt', skiprows=1)
+data_experimental2 = np.loadtxt('AA_gSF_239Pu_moraes_1993_g_abs.txt', skiprows=1)
 
 # HACK: Skip part in the middle
 data_ocl_sliced = np.vstack((data_ocl[0:17,:], data_ocl[24:-3,:]))
 print data_ocl[0:17,:]
 print data_ocl_sliced
 
-# Combine OCL and Berman data for this analysis (skip last two points from OCL - outliers)
-data_berm_ocl = np.vstack((data_ocl_sliced, data_berman))
+# Combine OCL and experimental1 data for this analysis (skip last two points from OCL - outliers)
+data_exp_ocl = np.vstack((data_ocl_sliced, data_experimental1, data_experimental2))
 
 # Define some parameters
 factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
@@ -151,8 +152,8 @@ p0=[
 	7.5, 5.45, 20		# SLO number 3
 	]
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
-popt, pcov = curve_fit(f, data_berm_ocl[:,0], data_berm_ocl[:,1], p0=p0,
-						sigma=data_berm_ocl[:,2], 
+popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
+						sigma=data_exp_ocl[:,2], 
 						maxfev=100000)
 print popt 	# Print resulting best-fit parameters.
 		   	# Note that we can also investigate the 
@@ -168,10 +169,14 @@ plt.figure()
 ax = plt.subplot(111)
 
 # Plot data points with error bars
-# Berman
-plt.semilogy(data_berman[:,0], data_berman[:,1], 'o', color="blue")
+# experimental1
+plt.semilogy(data_experimental1[:,0], data_experimental1[:,1], 'o', color="blue")
 plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(data_berman[:,0], data_berman[:,1], yerr=data_berman[:,2], fmt='o', color="blue")
+ax.errorbar(data_experimental1[:,0], data_experimental1[:,1], yerr=data_experimental1[:,2], fmt='o', color="blue")
+# experimental2
+plt.semilogy(data_experimental2[:,0], data_experimental2[:,1], 'o', color="green")
+plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
 # OCL
 ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
 
