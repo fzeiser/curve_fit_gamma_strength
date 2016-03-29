@@ -143,9 +143,9 @@ def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03,
 p0=[
  # omega, Gamma, sigma
  # MeV,   MeV,   mb
-	11.3, 3.2, 290, 	# EGLO number 1
-	14.15, 5.5, 340,  	# EGLO number 2
-	0.34, 				# Common EGLO temperature in MeV
+	11.3, 3.2, 290, 	# (E)GLO number 1
+	14.15, 5.5, 340,  	# (E)GLO number 2
+	0.34, 				# Common (E)GLO temperature in MeV
 	1.9, 0.6, 0.68,	    # SLO number 1 (scissors?)
 	2.7, 0.75, 0.35, 	# SLO number 2
 	7.5, 5.45, 20		# SLO number 3
