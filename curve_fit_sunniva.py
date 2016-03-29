@@ -21,10 +21,26 @@ data_ocl = np.loadtxt('AA_gSF_240Pu_strength.dat', skiprows=1)
 data_experimental1 = np.loadtxt('AA_gSF_239Pu_gurevich_1976_g_abs.txt', skiprows=1)
 data_experimental2 = np.loadtxt('AA_gSF_239Pu_moraes_1993_g_abs.txt', skiprows=1)
 
-# HACK: Skip part in the middle
-data_ocl_sliced = np.vstack((data_ocl[0:17,:], data_ocl[24:-3,:]))
-print data_ocl[0:17,:]
-print data_ocl_sliced
+#### preparation
+# raw_input returns the empty string for "enter"
+yes = set(['yes','y', 'ye', ''])
+no = set(['no','n'])
+###  /end preparation 
+
+# Potential HACK:Skip part in the middle
+print "Shall the (middel/otherwise defined) part of the OCL_data be skipped? (y/n)"
+choice = raw_input().lower()
+if choice in yes:
+   # HACK: Skip part in the middle
+    data_ocl_sliced = np.vstack((data_ocl[0:17,:], data_ocl[24:-3,:]))
+    print "choice: skip some data"
+    print data_ocl[0:17,:]
+    print data_ocl_sliced
+elif choice in no:
+    print "choice: take all data"
+    data_ocl_sliced = data_ocl
+else:
+   sys.stdout.write("Please respond with 'yes' or 'no'")
 
 # Combine OCL and experimental1 data for this analysis (skip last two points from OCL - outliers)
 data_exp_ocl = np.vstack((data_ocl_sliced, data_experimental1, data_experimental2))
