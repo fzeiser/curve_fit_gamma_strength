@@ -29,14 +29,17 @@ no = set(['no','n'])
 
 # Potential HACK:Skip part in the middle
 print "Shall the (middel/otherwise defined) part of the OCL_data be skipped? (y/n)"
-choice = raw_input().lower()
-if choice in yes:
+choice_skip = raw_input().lower()
+if choice_skip in yes:
    # HACK: Skip part in the middle
-    data_ocl_sliced = np.vstack((data_ocl[0:17,:], data_ocl[24:-3,:]))
+    n_points_skip      = 2   # number of points that should be skipped
+    n_point_start_skip = 2   # first point to be skipped, start counting from 1
+    n_point_continue   = n_point_start_skip + n_points_skip + 1
+    data_ocl_sliced = np.vstack((data_ocl[0:n_point_start_skip,:], data_ocl[n_point_continue:,:]))
     print "choice: skip some data"
-    print data_ocl[0:17,:]
-    print data_ocl_sliced
-elif choice in no:
+    #print data_ocl[0:n_point_start_skip,:]
+    #print data_ocl_sliced
+elif choice_skip in no:
     print "choice: take all data"
     data_ocl_sliced = data_ocl
 else:
@@ -218,7 +221,12 @@ plt.semilogy(data_experimental2[:,0], data_experimental2[:,1], 'o', color="green
 plt.ylim([1e-10, 1e-5]) # Set y-axis limits
 ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
 # OCL
-ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+if choice_skip in no:
+   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+elif choice_skip in yes:
+   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
+   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
 
 # Make the plot stick around to wait for more
 plt.hold('on')
