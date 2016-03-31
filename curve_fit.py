@@ -61,8 +61,8 @@ factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
 
-Tmin = 0.3  # minimum accepted temperature (see "hack")
-Tmax = 0.4   # maximum accepted temperature (see "hack")
+Tmin = 0.0001  # minimum accepted temperature (see "hack")
+Tmax = 0.6   # maximum accepted temperature (see "hack")
 
 def SLO(E, E0, Gamma0, sigma0):
 	# Special Lorentzian,
