@@ -61,7 +61,7 @@ factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
 
-Tmin = 0.01  # minimum accepted temperature (see "hack")
+Tmin = 0.1  # minimum accepted temperature (see "hack")
 Tmax = 0.6   # maximum accepted temperature (see "hack")
 
 def SLO(E, E0, Gamma0, sigma0):
@@ -163,17 +163,41 @@ p0=[
 	11.3, 3.2, 290, 	# (E)GLO number 1
 	14.15, 5.5, 340,  	# (E)GLO number 2
 	0.34, 				# Common (E)GLO temperature in MeV
-	1.9, 0.6, 0.68,	    # SLO number 1 (scissors?)
-	2.7, 0.75, 0.35, 	# SLO number 2
+	1.9, 0.6, 0.68,	    # SLO number 1 (scissors 1)
+	2.7, 0.75, 0.35, 	# SLO number 2 (scissors 2)
 	7.5, 5.45, 20		# SLO number 3
 	]
+
+parameter_names = [
+"(E)GLO1_E", "(E)GLO1_gamma", "(E)GLO1_sigma",
+"(E)GLO2_E", "(E)GLO2_gamma", "(E)GLO2_sigma",
+"(E)GLO_T",
+"SLO1_E", "SLO1_gamma", "SLO1_sigma",
+"SLO2_E", "SLO2_gamma", "SLO2_sigma",
+"SLO3_E", "SLO3_gamma", "SLO3_sigma"
+]
+
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
 popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
 						sigma=data_exp_ocl[:,2], 
 						maxfev=100000)
-print popt 	# Print resulting best-fit parameters.
+#print popt 	# Print resulting best-fit parameters.
 		   	# Note that we can also investigate the 
 		   	# covariance matrix of the fit if desired.
+
+
+
+print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
+for i in range(len(p0)):
+    print   (  "Parameter %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(parameter_names[i], p0[i], 
+popt[i], np.sqrt(pcov[i,i]))   ).expandtabs(6)
+
+n_temp=6
+print "\n (E)GLO temp: \t Start \t Tmin \t Tmax \t Opt \t Std"
+print (  "\t\t %.2f \t %.2f \t %.2f \t %.2f +- %.2f" %(p0[n_temp], 
+Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
+
+
 
 
 # == Plotting ==
