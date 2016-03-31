@@ -61,8 +61,8 @@ factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
 
-Tmin = 0.1  # minimum accepted temperature (see "hack")
-Tmax = 0.6   # maximum accepted temperature (see "hack")
+Tmin = 0.3  # minimum accepted temperature (see "hack")
+Tmax = 0.4   # maximum accepted temperature (see "hack")
 
 def SLO(E, E0, Gamma0, sigma0):
 	# Special Lorentzian,
@@ -163,8 +163,8 @@ p0=[
 	11.3, 3.2, 290, 	# (E)GLO number 1
 	14.15, 5.5, 340,  	# (E)GLO number 2
 	0.34, 				# Common (E)GLO temperature in MeV
-	1.9, 0.6, 0.68,	    # SLO number 1 (scissors 1)
-	2.7, 0.75, 0.35, 	# SLO number 2 (scissors 2)
+	1.5, 0.5, 0.68,	    # SLO number 1 (scissors 1)
+	2.5, 0.5, 0.35, 	# SLO number 2 (scissors 2)
 	7.5, 5.45, 20		# SLO number 3
 	]
 
