@@ -165,7 +165,7 @@ p0=[
  # omega, Gamma, sigma
  # MeV,   MeV,   mb
 	11.3, 3.2, 290, 	# (E)GLO number 1
-	14.15, 3, 200,  	# (E)GLO number 2
+	14.15, 3, 300,  	# (E)GLO number 2
 	0.34, 				# Common (E)GLO temperature in MeV
 	1.9, 0.5, 0.68,	    # SLO number 1 (scissors 1)
 	2.7, 0.5, 0.35, 	# SLO number 2 (scissors 2)
@@ -188,10 +188,15 @@ def f_E1 (E, E01, Gamma01, sigma01, T, E02, Gamma02, sigma02):
 
   
 # Known value and definition of the function that should run though it
-known_value = [6.534, 1.99e-7, 0.65e-8] # E value, y axis value, uncertainty y value
+known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
 # for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
 # the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
-weight_known_value = 1/known_value[2]**2
+weight_known_value_E1 = 1/known_value_E1[2]**2
+
+#known_value_M1 = [5.671, 0.31e-7, 0.65e-8] # E value, y axis value, uncertainty y value
+# for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
+# the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
+#weight_known_value_E1 = 1/known_value_E1[2]**2
 
 def error(p):
 	E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
@@ -286,9 +291,9 @@ plt.ylim([1e-10, 1e-5]) # Set y-axis limits
 ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
 
 #Plot constraint (known value), for 240Pu this was the f_E1 value by Chrien
-plt.semilogy(known_value[0], known_value[1], 'o', color="black")
+plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
 plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(known_value[0], known_value[1], yerr=known_value[2], fmt='o', color="black")
+ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
 
 
 # OCL
