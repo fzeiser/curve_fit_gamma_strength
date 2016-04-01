@@ -152,11 +152,25 @@ def EGLO(E, E0, Gamma0, sigma0, T):
     else:
         return f
 
+# Define the Function wot all the required parameters
+
+# The E1 strength - in our case the sum of the GDRs
+def f_E1(E, E01, Gamma01, sigma01, T, E02, Gamma02, sigma02):
+    f_E1 = GLO(E, E01, Gamma01, sigma01, T) + GLO(E, E02, Gamma02, sigma02, T)
+    return f_E1
+
+# Define potentially two scissors
+def f_scissors(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04):
+    return SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04)
+
+# The M1 strength - Scissors + 1 extra
+def f_M1(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
+    f_M1 = f_scissors(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
+    return f_M1
 
 # Define the combined function that we want to fit to data, with all required parameters.
 def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
-	return GLO(E, E01, Gamma01, sigma01, T) + GLO(E, E02, Gamma02, sigma02, T) + SLO(E, E03, Gamma03, sigma03) + SLO(E, E04, Gamma04, sigma04) + SLO(E, E05, Gamma05, sigma05)
-
+	return f_E1(E, E01, Gamma01, sigma01, T, E02, Gamma02, sigma02) + f_M1(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
 
 # == Do the curve fit ==
 # Starting parameters (by-eye fit) 
@@ -180,6 +194,7 @@ parameter_names = [
 "SLO3_E", "SLO3_gamma", "SLO3_sigma"
 ]
 
+
 # Slightly randomize starting values 
 myseed = random.randint(0, sys.maxint) #radomly select seed
 random.seed(myseed)                    #seed the randomizer
@@ -188,7 +203,6 @@ for i in range(len(p0)):
     myRand = random.uniform(0.9, 1.1) # select random float between (A,B)
     p0[i]=p0[i]*myRand
     # print myRand
-
 
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
 popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
