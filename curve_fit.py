@@ -29,7 +29,8 @@ no = set(['no','n'])
 
 # Potential HACK:Skip part in the middle
 print "Shall the (middel/otherwise defined) part of the OCL_data be skipped? (y/n)"
-choice_skip = raw_input().lower()
+#choice_skip = raw_input().lower()
+choice_skip ="y"
 if choice_skip in yes:
    # HACK: Skip part in the middle
     n_points_skip      = 2   # number of points that should be skipped
@@ -163,12 +164,12 @@ def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03,
 p0=[
  # omega, Gamma, sigma
  # MeV,   MeV,   mb
-	11.3, 3.2, 290, 	# (E)GLO number 1
-	14.15, 5.5, 340,  	# (E)GLO number 2
-	0.34, 				# Common (E)GLO temperature in MeV
-	1.9, 0.6, 0.68,	    # SLO number 1 (scissors 1)
-	2.7, 0.75, 0.35, 	# SLO number 2 (scissors 2)
-	7.5, 7, 20		# SLO number 3
+    11.3, 4.3, 270,     # (E)GLO number 1
+    14, 4.8, 320,   # (E)GLO number 2
+    0.09,               # Common (E)GLO temperature in MeV
+    2.0, 0.8, 0.7,      # SLO number 1 (scissors 1)
+    2.95, 0.5, 0.35,    # SLO number 2 (scissors 2)
+    8.34, 7.8, 19.75        # SLO number 3
 	]
 
 parameter_names = [
