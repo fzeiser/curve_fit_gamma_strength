@@ -217,7 +217,7 @@ pcov = result.hess_inv
 
 print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
 for i in range(len(p0)):
-    print   (  "Parameter %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(parameter_names[i], p0[i], 
+    print   (  "Parameter %i %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(i, parameter_names[i], p0[i], 
 popt[i], np.sqrt(pcov[i,i]))   ).expandtabs(6)
 
 n_temp=6
