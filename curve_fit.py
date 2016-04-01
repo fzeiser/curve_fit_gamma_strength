@@ -2,6 +2,7 @@ from __future__ import division
 from math import pi
 import math
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
 from scipy.optimize import minimize, curve_fit
 import sys
@@ -237,12 +238,19 @@ Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
 
 
 # == Plotting ==
+
+#creating subplots of different size
+gs = gridspec.GridSpec(1, 2,
+                       width_ratios=[4,1.5]
+                       #,height_ratios=[1,1]
+                       )
+
 # Make x-axis array to plot from
 Earray = np.linspace(0,20,800)
 
 # Initialize figure
-plt.figure()
-ax = plt.subplot(111)
+#plt.figure()
+ax = plt.subplot(gs[0],)
 
 # Plot data points with error bars
 # experimental1
@@ -294,10 +302,10 @@ plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
 plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
 
 # Show the whole thing
-plt.show()
+#plt.show()
 
 #Plotting the covariance matrixces
-plt.figure()
+plt.subplot(gs[1])
 
 plt.imshow(pcov,interpolation="nearest")
 plt.colorbar()
