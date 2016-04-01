@@ -272,12 +272,10 @@ print "\n Summed B(M1) strength \t B(M1) \t Centroid"
 print " \t\t\t mu_n**2 \t MeV"
 print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
 
-
-
 # == Plotting ==
 
 #creating subplots of different size
-gs = gridspec.GridSpec(1, 2,
+gs = gridspec.GridSpec(2, 2,
                        width_ratios=[4,1.5]
                        #,height_ratios=[1,1]
                        )
@@ -287,7 +285,7 @@ Earray = np.linspace(0,20,800)
 
 # Initialize figure
 #plt.figure()
-ax = plt.subplot(gs[0],)
+ax = plt.subplot(gs[0:2,0],)
 
 # Plot data points with error bars
 # experimental1
@@ -342,8 +340,69 @@ plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)
 #plt.show()
 
 #Plotting the covariance matrixces
-plt.subplot(gs[1])
+plt.subplot(gs[0,1])
 
 plt.imshow(pcov,interpolation="nearest")
 plt.colorbar()
+#plt.show()
+
+
+### Scissors####
+# Calculate the "Scissors more plot" ("background substracted")
+def f_bg(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
+    f_bg = f(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) \
+           - f_scissors(Energy, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+    return f_bg
+
+
+for i in range(len(data_ocl[:,0])):
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+    #substract the "bg" by f_M1 and f_E1 apart from scissors
+    Energy = data_ocl[i,0]
+    #print (  "Test before %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+    data_ocl[i,1] = data_ocl[i,1] \
+                    - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+    #calculate the y-axis staring value
+
+for i in range(len(data_ocl_sliced[:,0])):
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+    #substract the "bg" by f_M1 and f_E1 apart from scissors
+    Energy = data_ocl_sliced[i,0]
+    data_ocl_sliced[i,1] = data_ocl_sliced[i,1] \
+                           - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+
+    #print (  "Test after %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+
+#### Plot #######
+
+ax = plt.subplot(gs[1,1])
+
+# OCL
+# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+#plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
+ax.set_yscale("log", nonposy='clip')
+
+plt.ylim([1e-9, 1e-6]) # Set y-axis limits
+if choice_skip in no:
+   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+elif choice_skip in yes:
+   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
+   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
+
+# Make x-axis array to plot from
+Earray = np.linspace(0,5,800)
+
+# Plot fit curve(s):
+# Actual best-fit curve
+E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+f_scissors_opt = f_scissors(Earray, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+line1, = plt.plot(Earray, f_scissors_opt, color="cyan", label="line 1")
+
+# Plot fitted partial spectra
+# line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+# plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
+# plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
 plt.show()
