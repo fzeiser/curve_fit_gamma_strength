@@ -3,7 +3,7 @@ from math import pi
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
+from scipy.optimize import minimize, curve_fit
 import sys
 
 # Python script to fit (nuclear) curves to data. Requires Scipy.
@@ -180,14 +180,39 @@ parameter_names = [
 "SLO3_E", "SLO3_gamma", "SLO3_sigma"
 ]
 
+def error(p):
+	E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
+
+
+	known_value = [6, 5.5e-8, 1e-10] # E value, y axis value, uncertainty y value
+	weight_known_value = 1/known_value[2]**2
+
+	weight = 1/np.power(data_exp_ocl[:,2],2)
+
+	sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
+	sum += np.power(GLO(known_value[0], E01, Gamma01, sigma01, T) - known_value[1], 2) * weight_known_value
+	return sum
+
+
+print error(p0)
+
+result = minimize(error, p0, method="BFGS")
+print result
+
+
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
-popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
-						sigma=data_exp_ocl[:,2], 
-						maxfev=100000)
+#popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
+#						sigma=data_exp_ocl[:,2], 
+#						maxfev=100000)
 #print popt 	# Print resulting best-fit parameters.
 		   	# Note that we can also investigate the 
 		   	# covariance matrix of the fit if desired.
 
+popt = result.x
+print popt 	# Print resulting best-fit parameters.
+		   	# Note that we can also investigate the 
+		   	# covariance matrix of the fit if desired.
+pcov = result.hess_inv
 
 
 print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
@@ -254,4 +279,11 @@ plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
 plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
 
 # Show the whole thing
+plt.show()
+
+#Plotting the covariance matrixces
+plt.figure()
+
+plt.imshow(pcov,interpolation="nearest")
+plt.colorbar()
 plt.show()
