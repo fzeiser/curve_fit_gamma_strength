@@ -167,8 +167,8 @@ p0=[
 	11.3, 3.2, 290, 	# (E)GLO number 1
 	14.15, 3, 200,  	# (E)GLO number 2
 	0.34, 				# Common (E)GLO temperature in MeV
-	1.5, 0.5, 0.68,	    # SLO number 1 (scissors 1)
-	2.5, 0.5, 0.35, 	# SLO number 2 (scissors 2)
+	1.9, 0.5, 0.68,	    # SLO number 1 (scissors 1)
+	2.7, 0.5, 0.35, 	# SLO number 2 (scissors 2)
 	7.5, 5.45, 20		# SLO number 3
 	]
 
@@ -234,6 +234,29 @@ print "\n (E)GLO temp: \t Start \t Tmin \t Tmax \t Opt \t Std"
 print (  "\t\t %.2f \t %.2f \t %.2f \t %.2f +- %.2f" %(p0[n_temp], 
 Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
 
+
+# Calculate the resulting B(M1) values
+
+# some constant
+#pi     = 3.14159265358979323846;
+alpha            = 7.2973525664E-3 # approx. 1/137
+value_protonmass = 938.272046 # in MeV/c^2
+value_hbarc      = 197.32697 # in MeV fm
+factor_BM1       = 9./(32. * pi**2 ) * 1/alpha * (2.* value_protonmass / value_hbarc)**2. *1/10
+
+# (sigma1, Gamma1, omega2, sigma2, Gamma2, omega2) = popt[7:12]
+(omega1, Gamma1, sigma1, omega2, Gamma2, sigma2) = popt[7:13]
+
+B1 = factor_BM1 *(sigma1 * Gamma1 / omega1)
+B2 = factor_BM1 *(sigma2 * Gamma2 / omega2)
+B = B1 + B2
+Omega = (omega1 * B1 + omega2 * B2) / (B1+B2)
+
+#print popt[8]
+print "Estiamtion of the B(M1) value resulting from the scissors mode"
+print "\n Summed B(M1) strength \t B(M1) \t Centroid"
+print " \t\t\t mu_n**2 \t MeV"
+print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
 
 
 
