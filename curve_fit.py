@@ -166,9 +166,9 @@ p0=[
 	11.3, 3.2, 290, 	# (E)GLO number 1
 	14.15, 5.5, 340,  	# (E)GLO number 2
 	0.34, 				# Common (E)GLO temperature in MeV
-	1.5, 0.5, 0.68,	    # SLO number 1 (scissors 1)
-	2.5, 0.5, 0.35, 	# SLO number 2 (scissors 2)
-	7.5, 5.45, 20		# SLO number 3
+	1.9, 0.6, 0.68,	    # SLO number 1 (scissors 1)
+	2.7, 0.75, 0.35, 	# SLO number 2 (scissors 2)
+	7.5, 7, 20		# SLO number 3
 	]
 
 parameter_names = [
