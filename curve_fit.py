@@ -180,19 +180,26 @@ parameter_names = [
 "SLO3_E", "SLO3_gamma", "SLO3_sigma"
 ]
 
+# The E1 strength - in our case the sum of the GDRs
+def f_E1 (E, E01, Gamma01, sigma01, T, E02, Gamma02, sigma02):
+	f_E1 = GLO(E, E01, Gamma01, sigma01, T) + GLO(E, E02, Gamma02, sigma02, T)
+	return f_E1
+
 def error(p):
 	E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
 
-
-	known_value = [6, 5.5e-8, 1e-10] # E value, y axis value, uncertainty y value
+    # Known value and definition of the function that should run though it
+	known_value = [6.532, 1.99e-7, 1e-10] # E value, y axis value, uncertainty y value
+	# for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
+	# the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
 	weight_known_value = 1/known_value[2]**2
 
 	weight = 1/np.power(data_exp_ocl[:,2],2)
 
 	sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
-	sum += np.power(GLO(known_value[0], E01, Gamma01, sigma01, T) - known_value[1], 2) * weight_known_value
+	# here the contraint is added as a function 
+	sum += np.power(   f_E1(known_value[0], E01, Gamma01, sigma01, T, E01, Gamma01, sigma01) - known_value[1], 2) * weight_known_value
 	return sum
-
 
 print error(p0)
 
