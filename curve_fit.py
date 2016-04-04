@@ -275,6 +275,7 @@ print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
 
 # == Plotting ==
 
+plt.figure(1)
 #creating subplots of different size
 gs = gridspec.GridSpec(2, 2,
                        width_ratios=[4,1.5]
@@ -405,5 +406,228 @@ line1, = plt.plot(Earray, f_scissors_opt, color="cyan", label="line 1")
 plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
 plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
 # plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
+#plt.show()
+
+# ================================================
+# Estimate with the unconstrained version
+# ================================================
+
+# == Import data ==
+# Import data as matrices using built-in functionality.
+data_ocl = np.loadtxt('AA_gSF_240Pu_strength.dat', skiprows=1)
+data_experimental1 = np.loadtxt('AA_gSF_239Pu_gurevich_1976_g_abs.txt', skiprows=1)
+data_experimental2 = np.loadtxt('AA_gSF_239Pu_moraes_1993_g_abs.txt', skiprows=1)
+
+#### preparation
+# raw_input returns the empty string for "enter"
+yes = set(['yes','y', 'ye', ''])
+no = set(['no','n'])
+###  /end preparation 
+
+# Potential HACK:Skip part in the middle
+print "Shall the (middel/otherwise defined) part of the OCL_data be skipped? (y/n)"
+#choice_skip = raw_input().lower()
+choice_skip = "y"
+if choice_skip in yes:
+   # HACK: Skip part in the middle
+    n_points_skip      = 2   # number of points that should be skipped
+    n_point_start_skip = 2   # first point to be skipped, start counting from 1
+    n_point_continue   = n_point_start_skip + n_points_skip + 1
+    data_ocl_sliced = np.vstack((data_ocl[0:n_point_start_skip,:], data_ocl[n_point_continue:,:]))
+    print "choice: skip some data"
+    #print data_ocl[0:n_point_start_skip,:]
+    #print data_ocl_sliced
+elif choice_skip in no:
+    print "choice: take all data"
+    data_ocl_sliced = data_ocl
+else:
+   sys.stdout.write("Please respond with 'yes' or 'no'")
+
+# Combine OCL and experimental1 data for this analysis (skip last two points from OCL - outliers)
+data_exp_ocl = np.vstack((data_ocl_sliced, data_experimental1, data_experimental2))
+
+# Take the optimized values of the previous run as input to the new run
+p0 = popt
+
+# Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
+popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
+                        sigma=data_exp_ocl[:,2], 
+                        maxfev=100000)
+#print popt     # Print resulting best-fit parameters.
+            # Note that we can also investigate the 
+            # covariance matrix of the fit if desired.
+
+print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
+for i in range(len(p0)):
+    print   (  "Parameter %i %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(i, parameter_names[i], p0[i], 
+popt[i], np.sqrt(pcov[i,i]))   ).expandtabs(6)
+
+n_temp=6
+print "\n (E)GLO temp: \t Start \t Tmin \t Tmax \t Opt \t Std"
+print (  "\t\t %.2f \t %.2f \t %.2f \t %.2f +- %.2f" %(p0[n_temp], 
+Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
+
+
+# Calculate the resulting B(M1) values
+
+# some constant
+#pi     = 3.14159265358979323846;
+alpha            = 7.2973525664E-3 # approx. 1/137
+value_protonmass = 938.272046 # in MeV/c^2
+value_hbarc      = 197.32697 # in MeV fm
+factor_BM1       = 9./(32. * pi**2 ) * 1/alpha * (2.* value_protonmass / value_hbarc)**2. *1/10
+
+# (sigma1, Gamma1, omega2, sigma2, Gamma2, omega2) = popt[7:12]
+(omega1, Gamma1, sigma1, omega2, Gamma2, sigma2) = popt[7:13]
+
+B1 = factor_BM1 *(sigma1 * Gamma1 / omega1)
+B2 = factor_BM1 *(sigma2 * Gamma2 / omega2)
+B = B1 + B2
+Omega = (omega1 * B1 + omega2 * B2) / (B1+B2)
+
+#print popt[8]
+print "Estiamtion of the B(M1) value resulting from the scissors mode"
+print "\n Summed B(M1) strength \t B(M1) \t Centroid"
+print " \t\t\t mu_n**2 \t MeV"
+print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
+
+# == Plotting ==
+
+plt.figure(2)
+#creating subplots of different size
+gs = gridspec.GridSpec(2, 2,
+                       width_ratios=[4,1.5]
+                       #,height_ratios=[1,1]
+                       )
+
+# Make x-axis array to plot from
+Earray = np.linspace(0,20,800)
+
+# Initialize figure
+#plt.figure()
+ax = plt.subplot(gs[0:2,0],)
+
+# Plot data points with error bars
+# experimental1
+plt.semilogy(data_experimental1[:,0], data_experimental1[:,1], 'o', color="blue")
+plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+ax.errorbar(data_experimental1[:,0], data_experimental1[:,1], yerr=data_experimental1[:,2], fmt='o', color="blue")
+# experimental2
+plt.semilogy(data_experimental2[:,0], data_experimental2[:,1], 'o', color="green")
+plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
+
+#Plot constraint (known value), for 240Pu this was the f_E1 value by Chrien
+plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
+plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
+
+
+# OCL
+# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+if choice_skip in no:
+   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+elif choice_skip in yes:
+   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
+   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
+
+# Make the plot stick around to wait for more
+plt.hold('on')
+
+# Plot fit curve(s):
+# Initial by-eye fit
+E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p0
+farray_0 = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+line1, = plt.plot(Earray, farray_0, color="magenta", label="line 1")
+# Actual best-fit curve
+E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+farray_opt = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+line2, = plt.plot(Earray, farray_opt, color="cyan", label="line 2")
+
+# Plot fitted partial spectra
+line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
+
+# ==LEGEND==
+# Create a legend for the first line.
+plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
+
+# Show the whole thing
+#plt.show()
+
+#Plotting the covariance matrixces
+plt.subplot(gs[0,1])
+
+plt.imshow(pcov,interpolation="nearest")
+plt.colorbar()
+#plt.show()
+
+
+### Scissors####
+# Calculate the "Scissors more plot" ("background substracted")
+def f_bg(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
+    f_bg = f(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) \
+           - f_scissors(Energy, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+    return f_bg
+
+
+for i in range(len(data_ocl[:,0])):
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+    #substract the "bg" by f_M1 and f_E1 apart from scissors
+    Energy = data_ocl[i,0]
+    #print (  "Test before %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+    data_ocl[i,1] = data_ocl[i,1] \
+                    - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+    #calculate the y-axis staring value
+
+for i in range(len(data_ocl_sliced[:,0])):
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+    #substract the "bg" by f_M1 and f_E1 apart from scissors
+    Energy = data_ocl_sliced[i,0]
+    data_ocl_sliced[i,1] = data_ocl_sliced[i,1] \
+                           - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+
+    #print (  "Test after %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+
+#### Plot #######
+
+ax = plt.subplot(gs[1,1])
+
+# OCL
+# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+#plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
+ax.set_yscale("log", nonposy='clip')
+
+plt.ylim([1e-9, 1e-6]) # Set y-axis limits
+if choice_skip in no:
+   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+elif choice_skip in yes:
+   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
+   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
+
+# Make x-axis array to plot from
+Earray = np.linspace(0,5,800)
+
+# Plot fit curve(s):
+# Actual best-fit curve
+E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+f_scissors_opt = f_scissors(Earray, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+line1, = plt.plot(Earray, f_scissors_opt, color="cyan", label="line 1")
+
+# Plot fitted partial spectra
+# line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+# plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
+plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
+# plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
+
+
+
 
 plt.show()
