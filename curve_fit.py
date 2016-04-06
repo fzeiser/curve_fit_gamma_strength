@@ -2,9 +2,11 @@ from __future__ import division
 from math import pi
 import math
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
 from scipy.optimize import curve_fit
 import sys
+import random
 
 # Python script to fit (nuclear) curves to data. Requires Scipy.
 # Made by Joergen E. Midtboe, University of Oslo
