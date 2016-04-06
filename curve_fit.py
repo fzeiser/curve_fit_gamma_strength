@@ -31,7 +31,8 @@ no = set(['no','n'])
 
 # Potential HACK:Skip part in the middle
 print "Shall the (middel/otherwise defined) part of the OCL_data be skipped? (y/n)"
-choice_skip = raw_input().lower()
+# choice_skip = raw_input().lower()
+choice_skip = "y"
 if choice_skip in yes:
    # HACK: Skip part in the middle
     n_points_skip      = 2   # number of points that should be skipped
