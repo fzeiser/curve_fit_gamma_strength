@@ -6,6 +6,7 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 from scipy.optimize import minimize, curve_fit
 import sys
+import random
 
 # Python script to fit (nuclear) curves to data. Requires Scipy.
 # Made by Joergen E. Midtboe, University of Oslo
@@ -196,6 +197,10 @@ parameter_names = [
 "SLO3_E", "SLO3_gamma", "SLO3_sigma"
 ]
 
+# Slightly randomize starting values 
+p0_org = p0
+for i in range(len(p0)):
+    p0[i]=p0[i]*random.uniform(0.9, 1.1)
   
 # Known value and definition of the function that should run though it
 known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
@@ -449,6 +454,11 @@ data_exp_ocl = np.vstack((data_ocl_sliced, data_experimental1, data_experimental
 
 # Take the optimized values of the previous run as input to the new run
 p0 = popt
+
+# Slightly randomize starting values 
+p0_org2 = p0
+for i in range(len(p0)):
+    p0[i]=p0[i]*random.uniform(0.98, 1.02)
 
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
 popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
