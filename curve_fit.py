@@ -216,6 +216,23 @@ popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
 		   	# covariance matrix of the fit if desired.
 
 
+# define Chi Square
+def error(p):
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
+
+    weight = 1/np.power(data_exp_ocl[:,2],2)
+
+    sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
+    # here the contraint is added as a function
+    #sum += np.power( (f_E1(known_value_E1[0], E01, Gamma01, sigma01, T, E02, Gamma02, sigma02)) - known_value_E1[1], 2) * weight_known_value_E1
+    return sum
+
+#Derived Chi Squared Value For This Model
+chi_squared = error(popt)
+reduced_chi_squared = chi_squared / (len(data_exp_ocl[:,0]) - len(popt))
+print 'The degrees of freedom for this test is', len(data_exp_ocl[:,0]) - len(popt)
+print 'The chi squared value is: ', ("%.2f" % chi_squared)
+print 'The reduced chi squared value is: ', ("%.2f" % reduced_chi_squared)
 
 print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
 for i in range(len(p0)):
