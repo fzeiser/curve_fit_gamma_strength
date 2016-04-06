@@ -180,6 +180,16 @@ parameter_names = [
 "SLO3_E", "SLO3_gamma", "SLO3_sigma"
 ]
 
+# Slightly randomize starting values 
+myseed = random.randint(0, sys.maxint) #radomly select seed
+random.seed(myseed)                    #seed the randomizer
+p0_org = p0
+for i in range(len(p0)):
+    myRand = random.uniform(0.9, 1.1) # select random float between (A,B)
+    p0[i]=p0[i]*myRand
+    # print myRand
+
+
 # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
 popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
 						sigma=data_exp_ocl[:,2], 
