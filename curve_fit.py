@@ -67,7 +67,7 @@ factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
 
-Tmin = 0.0001  # minimum accepted temperature (see "hack")
+Tmin = 0.2  # minimum accepted temperature (see "hack")
 Tmax = 0.6   # maximum accepted temperature (see "hack")
 
 def SLO(E, E0, Gamma0, sigma0):
@@ -193,7 +193,7 @@ def error(p):
 myfile = open("results.txt", "w")
 
 #starting the loop
-n_max = 100 # number of times the program runs
+n_max = 1000 # number of times the program runs
 for i_run in range(0, n_max):
 
     # == Do the curve fit ==
@@ -226,7 +226,12 @@ for i_run in range(0, n_max):
     random.seed(myseed)                    #seed the randomizer
     p0_org = p0
     for i in range(len(p0)):
-        myRand = random.uniform(0.9, 1.1) # select random float between (A,B)
+        if i in range(0,6):
+            myRand = random.uniform(0.95, 1.05) # select random float between (A,B)
+        if i in range(6,13):
+            myRand = random.uniform(0.5, 1.9) # select random float between (A,B)
+        if i in range(13,len(p0)):
+            myRand = random.uniform(0.8, 1.5) # select random float between (A,B)
         p0[i]=p0[i]*myRand
         # print myRand
 
