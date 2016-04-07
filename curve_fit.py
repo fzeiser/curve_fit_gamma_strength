@@ -6,6 +6,7 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 from scipy.optimize import minimize, curve_fit
 import sys
+import random
 
 # Python script to fit (nuclear) curves to data. Requires Scipy.
 # Made by Joergen E. Midtboe, University of Oslo
@@ -181,249 +182,286 @@ def f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, 
            - f_scissors(Energy, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
     return f_bg
 
-# == Do the curve fit ==
-# Starting parameters (by-eye fit) 
-p0=[
- # omega, Gamma, sigma
- # MeV,   MeV,   mb
-	11.3, 4.3, 270, 	# (E)GLO number 1
-	14, 4.8, 320,  	# (E)GLO number 2
-	0.09, 				# Common (E)GLO temperature in MeV
-	2.0, 0.8, 0.7,	    # SLO number 1 (scissors 1)
-	2.95, 0.5, 0.35, 	# SLO number 2 (scissors 2)
-	8.34, 7.8, 19.75		# SLO number 3
-	]
+# Find the best input parameters by randomization of input
+# open file to safe data
+myfile = open("results.txt", "w")
 
-parameter_names = [
-"(E)GLO1_E", "(E)GLO1_gamma", "(E)GLO1_sigma",
-"(E)GLO2_E", "(E)GLO2_gamma", "(E)GLO2_sigma",
-"(E)GLO_T",
-"SLO1_E", "SLO1_gamma", "SLO1_sigma",
-"SLO2_E", "SLO2_gamma", "SLO2_sigma",
-"SLO3_E", "SLO3_gamma", "SLO3_sigma"
-]
-
-  
-# Known value and definition of the function that should run though it
-# known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
-# for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
-# the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
-# weight_known_value_E1 = 1/known_value_E1[2]**2
-
-#known_value_M1 = [5.671, 0.31e-7, 0.65e-8] # E value, y axis value, uncertainty y value
-# for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
-# the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
-#weight_known_value_E1 = 1/known_value_E1[2]**2
-
-# Give Anchor points for background
-known_value_anchor1 = data_exp_ocl[0,:]
-known_value_anchor2 = data_exp_ocl[len(data_ocl_sliced)-5,:]
-
-print (  "Energys of the anchor points: %.2f \t %.2f" %(known_value_anchor1[0], known_value_anchor2[0] ) )
-
-weight_known_value_anchor1 = 1/known_value_anchor1[2]**2
-weight_known_value_anchor2 = 1/known_value_anchor2[2]**2
-
-def error(p):
-    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
-
-    weight = 1/np.power(data_exp_ocl[:,2],2)
-
-    sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
-    # here the contraint is added as a function 
-    # sum += np.power( (f_E1(known_value_E1[0], E01, Gamma01, sigma01, T, E02, Gamma02, sigma02)) - known_value_E1[1], 2) * weight_known_value_E1
-    # constrain: Anchor
-    sum += np.power( f_bg(known_value_anchor1[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor1[1], 2) * weight_known_value_anchor1
-    sum += np.power( f_bg(known_value_anchor2[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor2[1], 2) * weight_known_value_anchor2
-    return sum
-
-print error(p0)
-
-result = minimize(error, p0, method="BFGS")
-print result
+#starting the loop
+n_max = 5 # number of times the program runs
+for i_run in range(0, n_max):
 
 
-# Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
-#popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
-#						sigma=data_exp_ocl[:,2], 
-#						maxfev=100000)
-#print popt 	# Print resulting best-fit parameters.
-		   	# Note that we can also investigate the 
-		   	# covariance matrix of the fit if desired.
+    # == Do the curve fit ==
+    # Starting parameters (by-eye fit) 
+    p0=[
+     # omega, Gamma, sigma
+     # MeV,   MeV,   mb
+    	11.3, 4.3, 270, 	# (E)GLO number 1
+    	14, 4.8, 320,  	# (E)GLO number 2
+    	0.09, 				# Common (E)GLO temperature in MeV
+    	2.0, 0.8, 0.7,	    # SLO number 1 (scissors 1)
+    	2.95, 0.5, 0.35, 	# SLO number 2 (scissors 2)
+    	8.34, 7.8, 19.75		# SLO number 3
+    	]
 
-popt = result.x
-print popt 	# Print resulting best-fit parameters.
-		   	# Note that we can also investigate the 
-		   	# covariance matrix of the fit if desired.
-pcov = result.hess_inv
+    parameter_names = [
+    "(E)GLO1_E", "(E)GLO1_gamma", "(E)GLO1_sigma",
+    "(E)GLO2_E", "(E)GLO2_gamma", "(E)GLO2_sigma",
+    "(E)GLO_T",
+    "SLO1_E", "SLO1_gamma", "SLO1_sigma",
+    "SLO2_E", "SLO2_gamma", "SLO2_sigma",
+    "SLO3_E", "SLO3_gamma", "SLO3_sigma"
+    ]
+
+    # Slightly randomize starting values 
+    myseed = random.randint(0, sys.maxint) #radomly select seed
+    # print myseed
+    # myseed=5836567308379321257           # uncomment to set the seed manually
+    random.seed(myseed)                    #seed the randomizer
+    p0_org = p0
+    for i in range(len(p0)):
+        myRand = random.uniform(0.9, 1.1) # select random float between (A,B)
+        p0[i]=p0[i]*myRand
+        # print myRand
+      
+    # Known value and definition of the function that should run though it
+    # known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
+    # for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
+    # the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
+    # weight_known_value_E1 = 1/known_value_E1[2]**2
+
+    #known_value_M1 = [5.671, 0.31e-7, 0.65e-8] # E value, y axis value, uncertainty y value
+    # for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
+    # the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
+    #weight_known_value_E1 = 1/known_value_E1[2]**2
+
+    # Give Anchor points for background
+    known_value_anchor1 = data_exp_ocl[0,:]
+    known_value_anchor2 = data_exp_ocl[len(data_ocl_sliced)-5,:]
+
+    print (  "Energys of the anchor points: %.2f \t %.2f" %(known_value_anchor1[0], known_value_anchor2[0] ) )
+
+    weight_known_value_anchor1 = 1/known_value_anchor1[2]**2
+    weight_known_value_anchor2 = 1/known_value_anchor2[2]**2
+
+    def error(p):
+        E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
+
+        weight = 1/np.power(data_exp_ocl[:,2],2)
+
+        sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
+        # here the contraint is added as a function 
+        # sum += np.power( (f_E1(known_value_E1[0], E01, Gamma01, sigma01, T, E02, Gamma02, sigma02)) - known_value_E1[1], 2) * weight_known_value_E1
+        # constrain: Anchor
+        sum += np.power( f_bg(known_value_anchor1[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor1[1], 2) * weight_known_value_anchor1
+        sum += np.power( f_bg(known_value_anchor2[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor2[1], 2) * weight_known_value_anchor2
+        return sum
+
+    print error(p0)
+
+    result = minimize(error, p0, method="BFGS")
+    print result
+
+    # Run curve fitting algorithm! (Taking uncertainties into account through the argument "sigma")
+    #popt, pcov = curve_fit(f, data_exp_ocl[:,0], data_exp_ocl[:,1], p0=p0,
+    #						sigma=data_exp_ocl[:,2], 
+    #						maxfev=100000)
+    #print popt 	# Print resulting best-fit parameters.
+    		   	# Note that we can also investigate the 
+    		   	# covariance matrix of the fit if desired.
+
+    popt = result.x
+    print popt 	# Print resulting best-fit parameters.
+    		   	# Note that we can also investigate the 
+    		   	# covariance matrix of the fit if desired.
+    pcov = result.hess_inv
+
+    #Derived Chi Squared Value For This Model
+    chi_squared = error(popt)
+    reduced_chi_squared = chi_squared / (len(data_exp_ocl[:,0]) - len(popt))
+    print 'The degrees of freedom for this test is', len(data_exp_ocl[:,0]) - len(popt)
+    print 'The chi squared value is: ', ("%.2f" % chi_squared)
+    print 'The reduced chi squared value is: ', ("%.2f" % reduced_chi_squared)
+
+    print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
+    for i in range(len(p0)):
+        print   (  "Parameter %i %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(i, parameter_names[i], p0[i], 
+    popt[i], np.sqrt(pcov[i,i]))   ).expandtabs(6)
+
+    n_temp=6
+    print "\n (E)GLO temp: \t Start \t Tmin \t Tmax \t Opt \t Std"
+    print (  "\t\t %.2f \t %.2f \t %.2f \t %.2f +- %.2f" %(p0[n_temp], 
+    Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
+
+    # Calculate the resulting B(M1) values
+
+    # some constant
+    #pi     = 3.14159265358979323846;
+    alpha            = 7.2973525664E-3 # approx. 1/137
+    value_protonmass = 938.272046 # in MeV/c^2
+    value_hbarc      = 197.32697 # in MeV fm
+    factor_BM1       = 9./(32. * pi**2 ) * 1/alpha * (2.* value_protonmass / value_hbarc)**2. *1/10
+
+    # (sigma1, Gamma1, omega2, sigma2, Gamma2, omega2) = popt[7:12]
+    (omega1, Gamma1, sigma1, omega2, Gamma2, sigma2) = popt[7:13]
+
+    B1 = factor_BM1 *(sigma1 * Gamma1 / omega1)
+    B2 = factor_BM1 *(sigma2 * Gamma2 / omega2)
+    B = B1 + B2
+    Omega = (omega1 * B1 + omega2 * B2) / (B1+B2)
+
+    #print popt[8]
+    print "Estiamtion of the B(M1) value resulting from the scissors mode"
+    print "\n Summed B(M1) strength \t B(M1) \t Centroid"
+    print " \t\t\t mu_n**2 \t MeV"
+    print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
+
+    # == Plotting ==
+
+    #creating subplots of different size
+    gs = gridspec.GridSpec(2, 2,
+                           width_ratios=[4,1.5]
+                           #,height_ratios=[1,1]
+                           )
+
+    # Make x-axis array to plot from
+    Earray = np.linspace(0,20,800)
+
+    # Initialize figure
+    #plt.figure()
+    ax = plt.subplot(gs[0:2,0],)
+
+    # Plot data points with error bars
+    # experimental1
+    plt.semilogy(data_experimental1[:,0], data_experimental1[:,1], 'o', color="blue")
+    plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    ax.errorbar(data_experimental1[:,0], data_experimental1[:,1], yerr=data_experimental1[:,2], fmt='o', color="blue")
+    # experimental2
+    plt.semilogy(data_experimental2[:,0], data_experimental2[:,1], 'o', color="green")
+    plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
+
+    #Plot constraint (known value), for 240Pu this was the f_E1 value by Chrien
+    # plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
+    # plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    # ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
+
+    #Plot constraint (known value), here the anchor points
+    plt.semilogy(known_value_anchor1[0], known_value_anchor1[1], 'bs', color="black")
+    plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    ax.errorbar(known_value_anchor1[0], known_value_anchor1[1], yerr=known_value_anchor1[2], fmt='bs', color="black")
+
+    plt.semilogy(known_value_anchor2[0], known_value_anchor2[1], 'bs', color="black")
+    plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    ax.errorbar(known_value_anchor2[0], known_value_anchor2[1], yerr=known_value_anchor2[2], fmt='bs', color="black")
 
 
-print       "Fit results: \t\t Starting value \t Optimal value \t Standard deviation"
-for i in range(len(p0)):
-    print   (  "Parameter %i %13s: \t\t %.2f \t\t %.2f \t\t %.2f" %(i, parameter_names[i], p0[i], 
-popt[i], np.sqrt(pcov[i,i]))   ).expandtabs(6)
+    # OCL
+    # two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+    if choice_skip in no:
+       ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
+    elif choice_skip in yes:
+       ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
+       ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
 
-n_temp=6
-print "\n (E)GLO temp: \t Start \t Tmin \t Tmax \t Opt \t Std"
-print (  "\t\t %.2f \t %.2f \t %.2f \t %.2f +- %.2f" %(p0[n_temp], 
-Tmin,  Tmax, popt[n_temp], np.sqrt(pcov[n_temp,n_temp]) )   )
+    # Make the plot stick around to wait for more
+    plt.hold('on')
 
-
-# Calculate the resulting B(M1) values
-
-# some constant
-#pi     = 3.14159265358979323846;
-alpha            = 7.2973525664E-3 # approx. 1/137
-value_protonmass = 938.272046 # in MeV/c^2
-value_hbarc      = 197.32697 # in MeV fm
-factor_BM1       = 9./(32. * pi**2 ) * 1/alpha * (2.* value_protonmass / value_hbarc)**2. *1/10
-
-# (sigma1, Gamma1, omega2, sigma2, Gamma2, omega2) = popt[7:12]
-(omega1, Gamma1, sigma1, omega2, Gamma2, sigma2) = popt[7:13]
-
-B1 = factor_BM1 *(sigma1 * Gamma1 / omega1)
-B2 = factor_BM1 *(sigma2 * Gamma2 / omega2)
-B = B1 + B2
-Omega = (omega1 * B1 + omega2 * B2) / (B1+B2)
-
-#print popt[8]
-print "Estiamtion of the B(M1) value resulting from the scissors mode"
-print "\n Summed B(M1) strength \t B(M1) \t Centroid"
-print " \t\t\t mu_n**2 \t MeV"
-print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
-
-# == Plotting ==
-
-#creating subplots of different size
-gs = gridspec.GridSpec(2, 2,
-                       width_ratios=[4,1.5]
-                       #,height_ratios=[1,1]
-                       )
-
-# Make x-axis array to plot from
-Earray = np.linspace(0,20,800)
-
-# Initialize figure
-#plt.figure()
-ax = plt.subplot(gs[0:2,0],)
-
-# Plot data points with error bars
-# experimental1
-plt.semilogy(data_experimental1[:,0], data_experimental1[:,1], 'o', color="blue")
-plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(data_experimental1[:,0], data_experimental1[:,1], yerr=data_experimental1[:,2], fmt='o', color="blue")
-# experimental2
-plt.semilogy(data_experimental2[:,0], data_experimental2[:,1], 'o', color="green")
-plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
-
-#Plot constraint (known value), for 240Pu this was the f_E1 value by Chrien
-# plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
-# plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-# ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
-
-#Plot constraint (known value), here the anchor points
-plt.semilogy(known_value_anchor1[0], known_value_anchor1[1], 'bs', color="black")
-plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(known_value_anchor1[0], known_value_anchor1[1], yerr=known_value_anchor1[2], fmt='bs', color="black")
-
-plt.semilogy(known_value_anchor2[0], known_value_anchor2[1], 'bs', color="black")
-plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(known_value_anchor2[0], known_value_anchor2[1], yerr=known_value_anchor2[2], fmt='bs', color="black")
-
-
-# OCL
-# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
-if choice_skip in no:
-   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
-elif choice_skip in yes:
-   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
-   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
-
-# Make the plot stick around to wait for more
-plt.hold('on')
-
-# Plot fit curve(s):
-# Initial by-eye fit
-E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p0
-farray_0 = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
-line1, = plt.plot(Earray, farray_0, color="magenta", label="line 1")
-# Actual best-fit curve
-E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
-farray_opt = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
-line2, = plt.plot(Earray, farray_opt, color="cyan", label="line 2")
-
-# Plot fitted partial spectra
-line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
-plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
-plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
-plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
-plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
-
-
-# ==LEGEND==
-# Create a legend for the first line.
-plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
-
-# Show the whole thing
-#plt.show()
-
-#Plotting the covariance matrixces
-plt.subplot(gs[0,1])
-
-plt.imshow(pcov,interpolation="nearest")
-plt.colorbar()
-#plt.show()
-
-
-for i in range(len(data_ocl[:,0])):
+    # Plot fit curve(s):
+    # Initial by-eye fit
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p0
+    farray_0 = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+    line1, = plt.plot(Earray, farray_0, color="magenta", label="line 1")
+    # Actual best-fit curve
     E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
-    #substract the "bg" by f_M1 and f_E1 apart from scissors
-    Energy = data_ocl[i,0]
-    #print (  "Test before %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
-    data_ocl[i,1] = data_ocl[i,1] \
-                    - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
-    #calculate the y-axis staring value
+    farray_opt = f(Earray, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+    line2, = plt.plot(Earray, farray_opt, color="cyan", label="line 2")
 
-for i in range(len(data_ocl_sliced[:,0])):
+    # Plot fitted partial spectra
+    line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+    plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
+    plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
+    plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
+    plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
+
+
+    # ==LEGEND==
+    # Create a legend for the first line.
+    plt.legend([line1,line2,line3], ["input estimate","optimized","optimized SLO/(E)GLOs"], loc=4)
+
+    # Show the whole thing
+    #plt.show()
+
+    #Plotting the covariance matrixces
+    plt.subplot(gs[0,1])
+
+    plt.imshow(pcov,interpolation="nearest")
+    plt.colorbar()
+    #plt.show()
+
+    data_ocl_sc=np.zeros(( len(data_ocl[:,0]) ,3))
+    for i in range(len(data_ocl[:,0])):
+        E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+        #substract the "bg" by f_M1 and f_E1 apart from scissors
+        Energy = data_ocl[i,0]
+        #print (  "Test before %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+        data_ocl_sc[i,0] = data_ocl[i,0]
+        data_ocl_sc[i,1] = data_ocl[i,1] \
+                        - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+        data_ocl_sc[i,2] = data_ocl[i,2]
+        #calculate the y-axis staring value
+
+    data_ocl_sliced_sc=np.zeros(( len(data_ocl_sliced[:,0]) ,3))
+    for i in range(len(data_ocl_sliced[:,0])):
+        E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
+        #substract the "bg" by f_M1 and f_E1 apart from scissors
+        Energy = data_ocl_sliced[i,0]
+        data_ocl_sliced_sc[i,0] = data_ocl_sliced[i,0]
+        # data_ocl_sliced_sc = np.zeros((3,len(data_ocl_sliced[:,0])))
+        data_ocl_sliced_sc[i,1] = data_ocl_sliced[i,1] \
+                               - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+        data_ocl_sliced_sc[i,2] = data_ocl_sliced[i,2]
+        #print (  "Test after %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+
+    #### Plot #######
+
+    ax = plt.subplot(gs[1,1])
+
+    # OCL
+    # two different version for the plotting; 1) if data is skipped, 2) if all data is taken
+    #plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
+    ax.set_yscale("log", nonposy='clip')
+
+    plt.ylim([1e-9, 1e-6]) # Set y-axis limits
+    if choice_skip in no:
+       ax.errorbar(data_ocl_sc[:,0], data_ocl_sc[:,1], yerr=data_ocl_sc[:,2], fmt='o', color='red')
+    elif choice_skip in yes:
+       ax.errorbar( data_ocl_sliced_sc[:,0],  data_ocl_sliced_sc[:,1], yerr= data_ocl_sliced_sc[:,2], fmt='o', color='red')
+       ax.errorbar(data_ocl_sc[n_point_start_skip+1:n_point_continue,0], data_ocl_sc[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl_sc[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
+
+    # Make x-axis array to plot from
+    Earray = np.linspace(0,5,800)
+
+    # Plot fit curve(s):
+    # Actual best-fit curve
     E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
-    #substract the "bg" by f_M1 and f_E1 apart from scissors
-    Energy = data_ocl_sliced[i,0]
-    data_ocl_sliced[i,1] = data_ocl_sliced[i,1] \
-                           - f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
+    f_scissors_opt = f_scissors(Earray, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+    line1, = plt.plot(Earray, f_scissors_opt, color="cyan", label="line 1")
 
-    #print (  "Test after %.2f \t %.2f" %(data_ocl[i,0] , data_ocl[i,1]*10**7) )
+    # Plot fitted partial spectra
+    # line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
+    # plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
+    plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
+    plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
+    # plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
 
-#### Plot #######
+    plt.show()
 
-ax = plt.subplot(gs[1,1])
 
-# OCL
-# two different version for the plotting; 1) if data is skipped, 2) if all data is taken
-#plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
-ax.set_yscale("log", nonposy='clip')
+    if i_run==0:
+        myfile.write( "Run \t seed \t chi**2 \t red.chi**2 \t B(M1)")
 
-plt.ylim([1e-9, 1e-6]) # Set y-axis limits
-if choice_skip in no:
-   ax.errorbar(data_ocl[:,0], data_ocl[:,1], yerr=data_ocl[:,2], fmt='o', color='red')
-elif choice_skip in yes:
-   ax.errorbar(data_ocl_sliced[:,0], data_ocl_sliced[:,1], yerr=data_ocl_sliced[:,2], fmt='o', color='red')
-   ax.errorbar(data_ocl[n_point_start_skip+1:n_point_continue,0], data_ocl[n_point_start_skip+1:n_point_continue,1], yerr=data_ocl[n_point_start_skip+1:n_point_continue,2], fmt='o', color='#FFC0CB')
+    myfile.write( "\n %i \t %i \t %.5f \t %.5f \t %.2f" %(i_run, myseed, chi_squared, 
+    reduced_chi_squared, B )   )
 
-# Make x-axis array to plot from
-Earray = np.linspace(0,5,800)
-
-# Plot fit curve(s):
-# Actual best-fit curve
-E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = popt
-f_scissors_opt = f_scissors(Earray, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
-line1, = plt.plot(Earray, f_scissors_opt, color="cyan", label="line 1")
-
-# Plot fitted partial spectra
-# line3, = plt.plot(Earray, GLO(Earray, E01, Gamma01, sigma01, T), '--', color="grey")
-# plt.plot(Earray, GLO(Earray, E02, Gamma02, sigma02, T), '--', color="grey")
-plt.plot(Earray, SLO(Earray, E03, Gamma03, sigma03), '--', color="grey")
-plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
-# plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
-
-plt.show()
+myfile.close() 
