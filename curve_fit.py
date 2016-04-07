@@ -174,6 +174,13 @@ def f_M1(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
 def f(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
 	return f_E1(E, E01, Gamma01, sigma01, T, E02, Gamma02, sigma02) + f_M1(E, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05)
 
+### Scissors####
+# Calculate the "Scissors more plot" ("background substracted")
+def f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
+    f_bg = f(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) \
+           - f_scissors(Energy, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
+    return f_bg
+
 # == Do the curve fit ==
 # Starting parameters (by-eye fit) 
 p0=[
@@ -198,25 +205,37 @@ parameter_names = [
 
   
 # Known value and definition of the function that should run though it
-known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
+# known_value_E1 = [6.534, 1.99e-7, 0.65e-7] # E value, y axis value, uncertainty y value
 # for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
 # the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
-weight_known_value_E1 = 1/known_value_E1[2]**2
+# weight_known_value_E1 = 1/known_value_E1[2]**2
 
 #known_value_M1 = [5.671, 0.31e-7, 0.65e-8] # E value, y axis value, uncertainty y value
 # for 240Pu we know from Chrien1985: F_E1 = (1.99+-0.65) * 1e-7 at Bn
 # the error on the y-axsis is chosen deliberatly small such as to give a big weight to the point!
 #weight_known_value_E1 = 1/known_value_E1[2]**2
 
+# Give Anchor points for background
+known_value_anchor1 = data_exp_ocl[0,:]
+known_value_anchor2 = data_exp_ocl[len(data_ocl_sliced)-5,:]
+
+print (  "Energys of the anchor points: %.2f \t %.2f" %(known_value_anchor1[0], known_value_anchor2[0] ) )
+
+weight_known_value_anchor1 = 1/known_value_anchor1[2]**2
+weight_known_value_anchor2 = 1/known_value_anchor2[2]**2
+
 def error(p):
-	E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
+    E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05 = p
 
-	weight = 1/np.power(data_exp_ocl[:,2],2)
+    weight = 1/np.power(data_exp_ocl[:,2],2)
 
-	sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
-	# here the contraint is added as a function 
-	sum += np.power( (f_E1(known_value_E1[0], E01, Gamma01, sigma01, T, E02, Gamma02, sigma02)) - known_value_E1[1], 2) * weight_known_value_E1
-	return sum
+    sum = np.sum( np.power( f(data_exp_ocl[:,0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - data_exp_ocl[:,1], 2) * weight )
+    # here the contraint is added as a function 
+    # sum += np.power( (f_E1(known_value_E1[0], E01, Gamma01, sigma01, T, E02, Gamma02, sigma02)) - known_value_E1[1], 2) * weight_known_value_E1
+    # constrain: Anchor
+    sum += np.power( f_bg(known_value_anchor1[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor1[1], 2) * weight_known_value_anchor1
+    sum += np.power( f_bg(known_value_anchor2[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) - known_value_anchor2[1], 2) * weight_known_value_anchor2
+    return sum
 
 print error(p0)
 
@@ -299,9 +318,18 @@ plt.ylim([1e-10, 1e-5]) # Set y-axis limits
 ax.errorbar(data_experimental2[:,0], data_experimental2[:,1], yerr=data_experimental2[:,2], fmt='o', color="green")
 
 #Plot constraint (known value), for 240Pu this was the f_E1 value by Chrien
-plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
+# plt.semilogy(known_value_E1[0], known_value_E1[1], 'o', color="black")
+# plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+# ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
+
+#Plot constraint (known value), here the anchor points
+plt.semilogy(known_value_anchor1[0], known_value_anchor1[1], 'bs', color="black")
 plt.ylim([1e-10, 1e-5]) # Set y-axis limits
-ax.errorbar(known_value_E1[0], known_value_E1[1], yerr=known_value_E1[2], fmt='o', color="black")
+ax.errorbar(known_value_anchor1[0], known_value_anchor1[1], yerr=known_value_anchor1[2], fmt='bs', color="black")
+
+plt.semilogy(known_value_anchor2[0], known_value_anchor2[1], 'bs', color="black")
+plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+ax.errorbar(known_value_anchor2[0], known_value_anchor2[1], yerr=known_value_anchor2[2], fmt='bs', color="black")
 
 
 # OCL
@@ -346,14 +374,6 @@ plt.subplot(gs[0,1])
 plt.imshow(pcov,interpolation="nearest")
 plt.colorbar()
 #plt.show()
-
-
-### Scissors####
-# Calculate the "Scissors more plot" ("background substracted")
-def f_bg(E, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05):
-    f_bg = f(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05) \
-           - f_scissors(Energy, E03, Gamma03, sigma03, E04, Gamma04, sigma04)
-    return f_bg
 
 
 for i in range(len(data_ocl[:,0])):
