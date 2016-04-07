@@ -67,7 +67,7 @@ factor = 8.6737E-08	# commonly used const. factor in mb^(-1) MeV^(-2)
 # best-fit value if it lands on the edge of the accepted region,
 # since this is no real minimum.
 
-Tmin = 0.0001  # minimum accepted temperature (see "hack")
+Tmin = 0.2  # minimum accepted temperature (see "hack")
 Tmax = 0.6   # maximum accepted temperature (see "hack")
 
 def SLO(E, E0, Gamma0, sigma0):
@@ -198,7 +198,7 @@ for i_run in range(0, n_max):
      # MeV,   MeV,   mb
     	11.3, 4.3, 270, 	# (E)GLO number 1
     	14, 4.8, 320,  	# (E)GLO number 2
-    	0.09, 				# Common (E)GLO temperature in MeV
+    	0.3, 				# Common (E)GLO temperature in MeV
     	2.0, 0.8, 0.7,	    # SLO number 1 (scissors 1)
     	2.95, 0.5, 0.35, 	# SLO number 2 (scissors 2)
     	8.34, 7.8, 19.75		# SLO number 3
@@ -432,7 +432,7 @@ for i_run in range(0, n_max):
     #plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
     ax.set_yscale("log", nonposy='clip')
 
-    plt.ylim([1e-9, 1e-6]) # Set y-axis limits
+    plt.ylim([1e-10, 1e-6]) # Set y-axis limits
     if choice_skip in no:
        ax.errorbar(data_ocl_sc[:,0], data_ocl_sc[:,1], yerr=data_ocl_sc[:,2], fmt='o', color='red')
     elif choice_skip in yes:
