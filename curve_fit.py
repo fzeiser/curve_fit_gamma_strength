@@ -187,7 +187,7 @@ def f_bg(Energy, E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, 
 myfile = open("results.txt", "w")
 
 #starting the loop
-n_max = 5 # number of times the program runs
+n_max = 100 # number of times the program runs
 for i_run in range(0, n_max):
 
 
@@ -315,6 +315,7 @@ for i_run in range(0, n_max):
     print "\n Summed B(M1) strength \t B(M1) \t Centroid"
     print " \t\t\t mu_n**2 \t MeV"
     print (  "\t\t\t %.2f \t %.2f" %(B , Omega) )
+    print 'The chi squared value is: ', ("%.2f" % chi_squared)
 
     # == Plotting ==
 
@@ -432,7 +433,7 @@ for i_run in range(0, n_max):
     #plt.semilogy(data_ocl[:,0], data_ocl[:,1], 'o', color="grey")
     ax.set_yscale("log", nonposy='clip')
 
-    plt.ylim([1e-10, 1e-6]) # Set y-axis limits
+    plt.ylim([1e-10, 1e-5]) # Set y-axis limits
     if choice_skip in no:
        ax.errorbar(data_ocl_sc[:,0], data_ocl_sc[:,1], yerr=data_ocl_sc[:,2], fmt='o', color='red')
     elif choice_skip in yes:
@@ -455,13 +456,22 @@ for i_run in range(0, n_max):
     plt.plot(Earray, SLO(Earray, E04, Gamma04, sigma04), '--', color="grey")
     # plt.plot(Earray, SLO(Earray, E05, Gamma05, sigma05), '--', color="grey")
 
+    #Plot constraint (known value), here the anchor points
+    # plt.semilogy(known_value_anchor1[0], known_value_anchor1[1]-f_bg(known_value_anchor1[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05), 'bs', color="black")
+    # plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    # ax.errorbar(known_value_anchor1[0], known_value_anchor1[1]-f_bg(known_value_anchor1[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05), yerr=known_value_anchor1[2], fmt='bs', color="black")
+
+    # plt.semilogy(known_value_anchor2[0], known_value_anchor2[1]-f_bg(known_value_anchor2[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05), 'bs', color="black")
+    # plt.ylim([1e-10, 1e-5]) # Set y-axis limits
+    # ax.errorbar(known_value_anchor2[0], known_value_anchor2[1]-f_bg(known_value_anchor2[0], E01, Gamma01, sigma01, E02, Gamma02, sigma02, T, E03, Gamma03, sigma03, E04, Gamma04, sigma04, E05, Gamma05, sigma05), yerr=known_value_anchor2[2], fmt='bs', color="black")
+
     plt.show()
 
 
     if i_run==0:
-        myfile.write( "Run \t seed \t chi**2 \t red.chi**2 \t B(M1)")
+        myfile.write( "Run \t seed \t chi**2 \t red.chi**2 \t B(M1) \t E03 \t Gamma03 \t sigma03")
 
-    myfile.write( "\n %i \t %i \t %.5f \t %.5f \t %.2f" %(i_run, myseed, chi_squared, 
-    reduced_chi_squared, B )   )
+    myfile.write( "\n %i \t %i \t %.5f \t %.5f \t %.2f \t %.2f \t %.2f \t %.2f" %(i_run, myseed, chi_squared, 
+    reduced_chi_squared, B,  E03, Gamma03, sigma03)   )
 
 myfile.close() 
